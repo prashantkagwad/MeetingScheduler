@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+<title>Meeting Scheduler</title>
+<meta name="description" content="">
+<meta name="author" content="PK">
+<link rel="shortcut icon" href="images/ms.ico">
+<link rel="stylesheet" href="css/skeleton-v1.1.css">
+<link rel="stylesheet" href="css/main-r6.css">
+<link rel="stylesheet" href="css/media-queries-r6.css">
+<link rel="stylesheet" href="css/sprites-r6.css">
+<link rel="stylesheet" href="css/default-r6.css">
+<link rel="stylesheet" href="css/firststyle.css">
+
+<link rel="stylesheet"
+	href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
+<link rel="stylesheet"
+	href="http://code.jquery.com/ui/1.10.0/themes/base/jquery-ui.css" />
+
+<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+<script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+
+<script>
+	$(document).ready(function() {
+
+		var tabs = $('#tabs-titles li'); //grab tabs
+		var contents = $('#tabs-contents li'); //grab contents
+
+		tabs.bind('click', function() {
+			contents.hide(); //hide all contents
+			tabs.removeClass('current'); //remove 'current' classes
+			$(contents[$(this).index()]).show(); //show tab content that matches tab title index
+			$(this).addClass('current'); //add current class on clicked tab title
+		});
+	});
+</script>
+
+<script>
+	// to add and delete meetings
+	$(function() {
+
+		var newMeeting = function(type, row) {
+
+			var mdlg = $("#meetingdialog-form").clone();
+
+			var meetingName = mdlg.find(("#meeting-name")), description = mdlg
+					.find(("#description")), duration = mdlg
+					.find(("#duration")), addressLine1 = mdlg
+					.find(("#address1")), addressLine2 = mdlg
+					.find(("#address2")), city = mdlg.find(("#city")), zipCode = mdlg
+					.find(("#zipcode")), state = mdlg.find(("#state")), time = mdlg
+					.find(("#fromtimepicker")), date = mdlg
+					.find(("#datepicker"));
+
+			type = type || 'Create';
+
+			var config = {
+				autoOpen : true,
+				height : 500,
+				width : 400,
+				modal : false,
+				buttons : {
+					"Create Meeting" : addMeeting,
+					"Cancel" : function() {
+						mdlg.dialog("close");
+					}
+				},
+				close : function() {
+					mdlg.remove();
+				}
+			};
+			mdlg.dialog(config);
+
+			function addMeeting() {
+
+				var xmlhttp = createXMLHTTPObject();
+				if (!xmlhttp) {
+					alert("no xmlhttp");
+					return;
+				}
+
+				var userID = sessionStorage.getItem("userID");
+
+				var jsonString = {
+					"userID" : userID,
+					"title" : meetingName.val(),
+					"description" : description.val(),
+					"duration" : duration.val(),
+					"location" : {
+						"addressLine1" : addressLine1.val(),
+						"addressLine2" : addressLine2.val(),
+						"city" : city.val(),
+						"zipCode" : zipCode.val(),
+						"state" : state.val()
+					},
+					"time" : time.val(),
+					"date" : date.val(),
+					"status" : "A"
+				};
+				var request = JSON.stringify(jsonString);
+
+				var url = host + "/addMeeting";
+				xmlhttp.open("POST", url, true);
+				xmlhttp.setRequestHeader("Content-type", "application/json");
+				xmlhttp.setRequestHeader("Access-Control-Allow-Origin", "*");
+				xmlhttp.onreadystatechange = function() {
+
+					if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+
+						var response = JSON.parse(xmlhttp.responseText);
+						if (response.status == "Success") {
+							alert("New meeting was successfully created!");
+							location.replace("admin.html");
+							mdlg.dialog("close");
+						} else {
+							alert("Error occured in creating a new meeting.");
+							mdlg.dialog("close");
+						}
+					}
+				};
+				xmlhttp.send(request);
+			}
+		};
+
+		$("#create-meeting").button().click(newMeeting);
+
+		// to delete meeting
+		$(document)
+				.on(
+						"click",
+						"#delete-meeting",
+						function() {
+							var meetingID = $(this).attr("value");
+
+							var val = confirm("Do you want to delete the meeting with meeting ID - "
+									+ meetingID + " ?");
+							if (val == true)
+								deleteMeeting(meetingID);
+							else
+								return false;
+						});
+	});
+
+	// to add and delete users
+	$(function() {
+
+		var newUser = function(type, row) {
+
+			var udlg = $("#userdialog-form").clone();
+
+			var firstname = udlg.find(("#first-name")), lastname = udlg
+					.find(("#last-name")), cellphone = udlg
+					.find(("#cell-phone")), email = udlg.find(("#email")), password = udlg
+					.find(("#password")), organization = udlg
+					.find(("#organization")), usertype = udlg
+					.find(("#user-type")), username = udlg.find(("#username"));
+
+			type = type || 'Create';
+
+			var config = {
+				autoOpen : true,
+				height : 500,
+				width : 400,
+				modal : false,
+				buttons : {
+					"Create User" : addUser,
+					"Cancel" : function() {
+						udlg.dialog("close");
+					}
+				},
+				close : function() {
+					udlg.remove();
+				}
+			};
+			udlg.dialog(config);
+
+			function addUser() {
+
+				var xmlhttp = createXMLHTTPObject();
+				if (!xmlhttp) {
+					alert("no xmlhttp");
+					return;
+				}
+
+				var jsonString = {
+					"password" : password.val(),
+					"userName" : username.val(),
+					"firstName" : firstname.val(),
+					"lastName" : lastname.val(),
+					"organization" : organization.val(),
+					"phoneNumber" : cellphone.val(),
+					"emailID" : email.val(),
+					"userType" : usertype.val(),
+					"status" : "A"
+				};
+				var request = JSON.stringify(jsonString);
+
+				var url = host + "/addUser";
+				xmlhttp.open("POST", url, true);
+				xmlhttp.setRequestHeader("Content-type", "application/json");
+				xmlhttp.setRequestHeader("Access-Control-Allow-Origin", "*");
+				xmlhttp.onreadystatechange = function() {
+
+					if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+
+						var response = JSON.parse(xmlhttp.responseText);
+						if (response.status == "Success") {
+							alert("New user was successfully created!");
+							location.replace("admin.html");
+							udlg.dialog("close");
+						} else {
+							alert("Error occured in creating a new user.");
+							udlg.dialog("close");
+						}
+					}
+				};
+				xmlhttp.send(request);
+			}
+		};
+
+		$("#create-user").button().click(newUser);
+
+		// to delete meeting
+		$(document)
+				.on(
+						"click",
+						"#delete-user",
+						function() {
+							var userID = $(this).attr("value");
+
+							var val = confirm("Do you want to delete the user with user ID - "
+									+ userID + " ?");
+							if (val == true)
+								deleteUser(userID);
+							else
+								return false;
+						});
+	});
+
+	$(document).on("click", "#search-meeting", function() {
+		searchMeeting();
+	});
+</script>
+<script>
+	var host = "https://192.168.5.102:8443/MeetingSchedulerMW";
+
+	var XMLHttpFactories = [ function() {
+		return new XMLHttpRequest();
+	}, function() {
+		return new ActiveXObject("Msxml3.XMLHTTP");
+	}, function() {
+		return new ActiveXObject("Msxml2.XMLHTTP.6.0");
+	}, function() {
+		return new ActiveXObject("Msxml2.XMLHTTP.3.0");
+	}, function() {
+		return new ActiveXObject("Msxml2.XMLHTTP");
+	}, function() {
+		return new ActiveXObject("Microsoft.XMLHTTP");
+	} ];
+
+	function createXMLHTTPObject() {
+
+		var xmlhttp = false;
+		for (var i = 0; i < XMLHttpFactories.length; i++) {
+			try {
+				xmlhttp = XMLHttpFactories[i]();
+			} catch (e) {
+				continue;
+			}
+			break;
+		}
+		return xmlhttp;
+	}
+
+	function getAllUsers() {
+
+		var xmlhttp = createXMLHTTPObject();
+		if (!xmlhttp) {
+			alert("no xmlhttp");
+			return;
+		}
+
+		var url = host + "/getAllUsers";
+		xmlhttp.open("GET", url, true);
+		xmlhttp.setRequestHeader("Content-type", "application/json");
+		xmlhttp.setRequestHeader("Access-Control-Allow-Origin", "*");
+		xmlhttp.onreadystatechange = function() {
+
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+
+				var response = JSON.parse(xmlhttp.responseText);
+				if (response.status == "Success") {
+					displayUsers(response);
+				} else {
+					alert("No data available!");
+				}
+			}
+		};
+		xmlhttp.send(null);
+		return false; // Do not follow hyperlink
+	}
+
+	function displayUsers(response) {
+
+		var table = document.getElementById("userDiv");
+		var tableBody = document.createElement('TBODY');
+
+		//TABLE ROWS
+		var tr = new Array();
+		for (i = 0; i < response.users.length; i++) {
+
+			tr[i] = document.createElement('TR');
+
+			var td1 = document.createElement('TD');
+			td1.appendChild(document.createTextNode(response.users[i].userID));
+			tr[i].appendChild(td1);
+			var td2 = document.createElement('TD');
+			td2.appendChild(document
+					.createTextNode(response.users[i].firstName));
+			tr[i].appendChild(td2);
+			var td3 = document.createElement('TD');
+			td3
+					.appendChild(document
+							.createTextNode(response.users[i].lastName));
+			tr[i].appendChild(td3);
+			var td4 = document.createElement('TD');
+			td4.appendChild(document
+					.createTextNode(response.users[i].organization));
+			tr[i].appendChild(td4);
+			var td5 = document.createElement('TD');
+			td5.appendChild(document
+					.createTextNode(response.users[i].phoneNumber));
+			tr[i].appendChild(td5);
+			var td6 = document.createElement('TD');
+			td6.appendChild(document.createTextNode(response.users[i].emailID));
+			tr[i].appendChild(td6);
+			tableBody.appendChild(tr[i]);
+
+			var userType = response.users[i].userType;
+			if (userType == "N") {
+
+				var button = document.createElement("button");
+				button.type = "button";
+				button.value = response.users[i].userID;
+				button.class = "dbutton";
+				button.id = "delete-user";
+
+				var td7 = document.createElement('TD');
+				td7.appendChild(button);
+				tr[i].appendChild(td7);
+			}
+			tableBody.appendChild(tr[i]);
+
+			var trbr = document.createElement('TR');
+			var br = document.createElement('BR');
+			trbr.appendChild(br);
+			tableBody.appendChild(trbr);
+		}
+		table.appendChild(tableBody);
+	}
+
+	function deleteUser(userID) {
+
+		var xmlhttp = createXMLHTTPObject();
+		if (!xmlhttp) {
+			alert("no xmlhttp");
+			return;
+		}
+
+		var jsonString = {
+			"userID" : userID
+		};
+		var request = JSON.stringify(jsonString);
+
+		var url = host + "/deleteUser";
+		xmlhttp.open("DELETE", url, true);
+		xmlhttp.setRequestHeader("Content-type", "application/json");
+		xmlhttp.setRequestHeader("Access-Control-Allow-Origin", "*");
+		xmlhttp.onreadystatechange = function() {
+
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+
+				var response = JSON.parse(xmlhttp.responseText);
+				if (response.status == "Success") {
+					alert("User was successfully deleted!");
+					location.replace("admin.html");
+				} else {
+					alert("Error occured while deleting the user.");
+					location.replace("admin.html");
+				}
+			}
+		};
+		xmlhttp.send(request);
+	}
+
+	function getAllMeetings() {
+
+		var xmlhttp = createXMLHTTPObject();
+		if (!xmlhttp) {
+			alert("no xmlhttp");
+			return;
+		}
+
+		var url = host + "/getAllMeetings";
+		xmlhttp.open("GET", url, true);
+		xmlhttp.setRequestHeader("Content-type", "application/json");
+		xmlhttp.setRequestHeader("Access-Control-Allow-Origin", "*");
+		xmlhttp.onreadystatechange = function() {
+
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+
+				var response = JSON.parse(xmlhttp.responseText);
+				if (response.status == "Success") {
+					displayMeetings(response);
+				} else {
+					alert("Error occured while getting all meetings.");
+					location.replace("admin.html");
+				}
+			}
+		};
+		xmlhttp.send(null);
+		return false; // Do not follow hyperlink
+	}
+
+	function displayMeetings(response) {
+
+		var table = document.getElementById("meetingDiv");
+		var tableBody = document.createElement('TBODY');
+
+		//TABLE ROWS
+		var tr = new Array();
+		for (i = 0; i < response.meetingDetails.length; i++) {
+
+			tr[i] = document.createElement('TR');
+
+			var td1 = document.createElement('TD');
+			td1.appendChild(document
+					.createTextNode(response.meetingDetails[i].meetingID));
+			tr[i].appendChild(td1);
+			var td2 = document.createElement('TD');
+			td2.appendChild(document
+					.createTextNode(response.meetingDetails[i].userID));
+			tr[i].appendChild(td2);
+			var td3 = document.createElement('TD');
+			td3.appendChild(document
+					.createTextNode(response.meetingDetails[i].title));
+			tr[i].appendChild(td3);
+			var td4 = document.createElement('TD');
+			td4.appendChild(document
+					.createTextNode(response.meetingDetails[i].date));
+			tr[i].appendChild(td4);
+			var td5 = document.createElement('TD');
+			td5.appendChild(document
+					.createTextNode(response.meetingDetails[i].time));
+			tr[i].appendChild(td5);
+			var td6 = document.createElement('TD');
+			td6.appendChild(document
+					.createTextNode(response.meetingDetails[i].duration));
+			tr[i].appendChild(td6);
+			var td7 = document.createElement('TD');
+			td7
+					.appendChild(document
+							.createTextNode(response.meetingDetails[i].location.addressLine1
+									+ ",\n"
+									+ response.meetingDetails[i].location.addressLine2
+									+ ",\n"
+									+ response.meetingDetails[i].location.city
+									+ ",\n"
+									+ response.meetingDetails[i].location.state
+									+ " - "
+									+ response.meetingDetails[i].location.zipCode));
+			tr[i].appendChild(td7);
+			var td8 = document.createElement('TD');
+			td8.appendChild(document
+					.createTextNode(response.meetingDetails[i].description));
+			tr[i].appendChild(td8);
+
+			var userID = sessionStorage.getItem("userID");
+			if (userID == response.meetingDetails[i].userID) {
+
+				var button = document.createElement("button");
+				button.type = "button";
+				button.value = response.meetingDetails[i].meetingID;
+				button.class = "dbutton";
+				button.id = "delete-meeting";
+
+				var td9 = document.createElement('TD');
+				td9.appendChild(button);
+				tr[i].appendChild(td9);
+			}
+			tableBody.appendChild(tr[i]);
+
+			var trbr = document.createElement('TR');
+			var br = document.createElement('BR');
+			trbr.appendChild(br);
+			tableBody.appendChild(trbr);
+		}
+		table.appendChild(tableBody);
+	}
+
+	function deleteMeeting(meetingID) {
+
+		var xmlhttp = createXMLHTTPObject();
+		if (!xmlhttp) {
+			alert("no xmlhttp");
+			return;
+		}
+
+		var jsonString = {
+			"meetingID" : meetingID
+		};
+		var request = JSON.stringify(jsonString);
+
+		var url = host + "/deleteMeeting";
+		xmlhttp.open("DELETE", url, true);
+		xmlhttp.setRequestHeader("Content-type", "application/json");
+		xmlhttp.setRequestHeader("Access-Control-Allow-Origin", "*");
+		xmlhttp.onreadystatechange = function() {
+
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+
+				var response = JSON.parse(xmlhttp.responseText);
+				if (response.status == "Success") {
+					alert("Meeting was successfully deleted!");
+					location.replace("admin.html");
+				} else {
+					alert("Error occured while deleting the meeting.");
+				}
+			}
+		};
+		xmlhttp.send(request);
+	}
+
+	function searchMeeting() {
+
+		var suserID = document.getElementById("suserID").value;
+		var scity = document.getElementById("scity").value;
+
+		if (suserID == "" && scity == "") {
+			alert("Enter atleast one search criteria.");
+			return false;
+		}
+
+		if (suserID == "") {
+			suserID = null;
+		}
+		if (scity == "") {
+			scity = null;
+		}
+
+		var xmlhttp = createXMLHTTPObject();
+		if (!xmlhttp) {
+			alert("no xmlhttp");
+			return;
+		}
+
+		var jsonString = {
+			"userID" : suserID,
+			"date" : null,
+			"city" : scity
+		};
+		var request = JSON.stringify(jsonString);
+
+		var url = host + "/getMeetingDetails";
+		xmlhttp.open("POST", url, true);
+		xmlhttp.setRequestHeader("Content-type", "application/json");
+		xmlhttp.setRequestHeader("Access-Control-Allow-Origin", "*");
+		xmlhttp.onreadystatechange = function() {
+
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+
+				var response = JSON.parse(xmlhttp.responseText);
+				if (response.status == "Success"
+						&& response.meetingDetails.length > 0) {
+					displaySearchedMeetings(response);
+					//location.replace("admin.html");
+				} else {
+					var table = document.getElementById("searchDiv");
+
+					if (document.getElementById("searchDiv").style.display == 'table-row') {
+						document.getElementById("searchDiv").style.display = 'none';
+					}
+					alert("No meetings found for the given search criteria.");
+					//location.replace("admin.html");
+				}
+			}
+		};
+		xmlhttp.send(request);
+	}
+
+	function displaySearchedMeetings(response) {
+
+		var table = document.getElementById("searchDiv");
+		var tableBody = document.createElement('TBODY');
+
+		if (document.getElementById("searchDiv").style.display == 'none') {
+			document.getElementById("searchDiv").style.display = 'table-row'; // set to table-row instead of an empty string
+		}
+
+		try {
+			var rowCount = table.rows.length;
+
+			for (var i = 1; i < rowCount; i++) {
+				var row = table.rows[i];
+				var chkbox = row.childNodes[0];
+				if (null != chkbox) {
+					table.deleteRow(i);
+					rowCount--;
+					i--;
+				}
+			}
+		} catch (e) {
+			alert(e);
+		}
+
+		//TABLE ROWS
+		var tr = new Array();
+		for (i = 0; i < response.meetingDetails.length; i++) {
+
+			tr[i] = document.createElement('TR');
+
+			var td1 = document.createElement('TD');
+			td1.appendChild(document
+					.createTextNode(response.meetingDetails[i].meetingID));
+			tr[i].appendChild(td1);
+			var td2 = document.createElement('TD');
+			td2.appendChild(document
+					.createTextNode(response.meetingDetails[i].userID));
+			tr[i].appendChild(td2);
+			var td3 = document.createElement('TD');
+			td3.appendChild(document
+					.createTextNode(response.meetingDetails[i].title));
+			tr[i].appendChild(td3);
+			var td4 = document.createElement('TD');
+			td4.appendChild(document
+					.createTextNode(response.meetingDetails[i].date));
+			tr[i].appendChild(td4);
+			var td5 = document.createElement('TD');
+			td5.appendChild(document
+					.createTextNode(response.meetingDetails[i].time));
+			tr[i].appendChild(td5);
+			var td6 = document.createElement('TD');
+			td6.appendChild(document
+					.createTextNode(response.meetingDetails[i].duration));
+			tr[i].appendChild(td6);
+			var td7 = document.createElement('TD');
+			td7
+					.appendChild(document
+							.createTextNode(response.meetingDetails[i].location.addressLine1
+									+ ",\n"
+									+ response.meetingDetails[i].location.addressLine2
+									+ ",\n"
+									+ response.meetingDetails[i].location.city
+									+ ",\n"
+									+ response.meetingDetails[i].location.state
+									+ " - "
+									+ response.meetingDetails[i].location.zipCode));
+			tr[i].appendChild(td7);
+			var td8 = document.createElement('TD');
+			td8.appendChild(document
+					.createTextNode(response.meetingDetails[i].description));
+			tr[i].appendChild(td8);
+
+			var userID = sessionStorage.getItem("userID");
+			if (userID == response.meetingDetails[i].userID) {
+
+				var button = document.createElement("button");
+				button.type = "button";
+				button.value = response.meetingDetails[i].meetingID;
+				button.class = "dbutton";
+				button.id = "delete-meeting";
+
+				var td9 = document.createElement('TD');
+				td9.appendChild(button);
+				tr[i].appendChild(td9);
+			}
+			tableBody.appendChild(tr[i]);
+
+			var trbr = document.createElement('TR');
+			var br = document.createElement('BR');
+			trbr.appendChild(br);
+			tableBody.appendChild(trbr);
+		}
+		table.appendChild(tableBody);
+	}
+
+	function start() {
+
+		// Data from previous page
+		var user = JSON.parse(sessionStorage.getItem("user"));
+
+		if (user == null || user.userType != "A") {
+
+			location.replace("index.html");
+			return false;
+		}
+
+		sessionStorage.setItem("userID", user.userID);
+
+		document.getElementById("userID").appendChild(
+				document.createTextNode(user.userID));
+		document.getElementById("firstName").appendChild(
+				document.createTextNode(user.firstName));
+		document.getElementById("lastName").appendChild(
+				document.createTextNode(user.lastName));
+		document.getElementById("org").appendChild(
+				document.createTextNode(user.organization));
+		document.getElementById("phone").appendChild(
+				document.createTextNode(user.phoneNumber));
+		document.getElementById("email").appendChild(
+				document.createTextNode(user.emailID));
+
+		// Call WS and fill in the tables for users.
+		getAllUsers();
+
+		// Call WS and fill in the tables for meetings.
+		getAllMeetings();
+	}
+
+	function logout() {
+
+		sessionStorage.clear();
+		location.replace("index.html");
+	}
+</script>
+
+</head>
+<body onload="start()">
+
+	<div id="main">
+		<header>
+			<h1 class="heading">
+				Meeting Scheduler
+				<button id="logout" class="logout" onclick="logout()">Logout</button>
+			</h1>
+		</header>
+
+		<article id="home">
+			<div class="container">
+				<div class="bottom-gradient between-rows">
+					<span class="left"></span> <span class="center"></span> <span
+						class="right"></span>
+				</div>
+				<div class="row">
+					<div class="sixteen columns">
+						<h4 class="text">User Details</h4>
+						<br>
+						<table id="userDetails" class="table" style="width: 900px">
+							<tr id="tableRow">
+								<td id="userID" width="150x"></td>
+								<td id="firstName" width="150px"></td>
+								<td id="lastName" width="150px"></td>
+								<td id="org" width="150px"></td>
+								<td id="phone" width="150px"></td>
+								<td id="email" width="150px"></td>
+						</table>
+					</div>
+				</div>
+				<br> <br>
+				<div class="bottom-gradient between-rows">
+					<span class="left"></span> <span class="center"></span> <span
+						class="right"></span>
+				</div>
+				<div class="sixteen columns">
+					<h4 class="text">User and Meeting Information</h4>
+					<br>
+					<ul id="tabs-titles" class="text">
+						<li class="current">Users</li>
+						<li><br></li>
+						<li>Meetings</li>
+						<li><br></li>
+						<li>Search</li>
+					</ul>
+					<ul id="tabs-contents">
+						<li><div class="content">
+								<div class="row">
+									<div class="sixteen columns">
+
+										<table id="userDiv" class="table" style="width: 900px">
+											<tr id="tableRow">
+												<th width="150px">User ID</th>
+												<th width="150px">First Name</th>
+												<th width="150px">Last name</th>
+												<th width="150px">Organization</th>
+												<th width="150px">Phone</th>
+												<th width="150px">Email Id</th>
+												<th width="100px"></th>
+											</tr>
+											<tr id="tableRow">
+												<th><br></th>
+											</tr>
+										</table>
+										<button id="create-user" class="button">Create User</button>
+									</div>
+								</div>
+							</div></li>
+						<li></li>
+						<li><div class="content">
+								<div class="row">
+									<div class="sixteen columns">
+										<table id="meetingDiv" class="table" style="width: 1000px">
+											<tr id="tableRow">
+												<th width="100x">Meeting ID</th>
+												<th width="100px">User ID</th>
+												<th width="100px">Title</th>
+												<th width="100px">Date</th>
+												<th width="100px">Time</th>
+												<th width="100px">Duration</th>
+												<th width="175px">Location</th>
+												<th width="175px">Description</th>
+												<th width="100px"></th>
+											</tr>
+											<tr id="tableRow">
+												<th><br></th>
+											</tr>
+										</table>
+										<button id="create-meeting" class="button">Create
+											Meeting</button>
+									</div>
+								</div>
+							</div></li>
+						<li></li>
+						<li>
+							<div class="content">
+								<div class="row">
+									<div class="sixteen columns">
+										<table class="table" class="table">
+											<tr id="tableRow" style="width: 1000px">
+												<th width="125x"><label title="UserID">UserID</label></th>
+												<th width="125x"><input id="suserID" type="text"></th>
+												<th width="125x"><label title="city">City</label></th>
+												<th width="125x"><input id="scity" type="text"></th>
+												<th width="250x"><button id="search-meeting"
+														class="sbutton">Search Meeting</button></th>
+											</tr>
+										</table>
+										<br> <br>
+										<table id="searchDiv" class="table" style="display: none;"
+											style="width: 1000px">
+											<tr id="tableRow">
+												<th width="100x">Meeting ID</th>
+												<th width="100px">User ID</th>
+												<th width="100px">Title</th>
+												<th width="100px">Date</th>
+												<th width="100px">Time</th>
+												<th width="100px">Duration</th>
+												<th width="175px">Location</th>
+												<th width="175px">Description</th>
+												<th width="100px"></th>
+											</tr>
+											<tr id="tableRow">
+												<th><br></th>
+											</tr>
+										</table>
+									</div>
+								</div>
+							</div>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</article>
+
+		<!-- Form for create new meeting - BEGIN  -->
+		<div id=" tabs-3" class="strow" title="Create New Meeting"
+			hidden="true">
+			<div id="meetingdialog-form" class="strow" title="Create New Meeting">
+				<form>
+					<table class="table" style="width: 350px">
+
+						<tr class="strow">
+							<td><label for="meeting-name">Title</label></td>
+							<td><input type="text" name="meeting name" id="meeting-name"
+								value="" /></td>
+						</tr>
+
+						<tr class="strow">
+							<td><label for="description">Description</label></td>
+							<td><input type="text" name="description" id="description"
+								value="" required /></td>
+						</tr>
+
+						<tr class="strow">
+							<td><label for="date">Date</label></td>
+							<td><input type="date" name="datepicker" id="datepicker"
+								value="" required /></td>
+						</tr>
+
+						<tr class="strow">
+							<td><label for="start_time">Start Time</label></td>
+							<td><input type="time" name="starttime" id="fromtimepicker"
+								value="" required /></td>
+						</tr>
+
+						<tr class="strow">
+							<td><label for="duration">Duration (hh:mm:ss)</label></td>
+							<td><input type="text" name="duration" id="duration"
+								value="01:00:00" required /></td>
+						</tr>
+
+						<tr class="strow">
+							<td><label for="address1">Address-Line 1</label></td>
+							<td><input type="text" name="location" id="address1"
+								value="" required /></td>
+						</tr>
+
+						<tr class="strow">
+							<td><label for="address2">Address-Line 2</label></td>
+							<td><input type="text" name="location" id="address2"
+								value="" required /></td>
+						</tr>
+
+						<tr class="strow">
+							<td><label for="city">City</label></td>
+							<td><input type="text" name="location" id="city" value=""
+								required /></td>
+						</tr>
+
+						<tr class="strow">
+							<td><label for="zipcode">Zip Code</label></td>
+							<td><input type="number" pattern="[0-9]+" name="location"
+								id="zipcode" min="0" value="" required /></td>
+						</tr>
+
+						<tr class="strow">
+							<td><label for="state">State</label></td>
+							<td><select id="state">
+									<option selected="selected">Select</option>
+									<option value="Alabama">Alabama</option>
+									<option value="Alaska">Alaska</option>
+									<option value="Arizona">Arizona</option>
+									<option value="Arkansas">Arkansas</option>
+									<option value="California">California</option>
+									<option value="Colorado">Colorado</option>
+									<option value="Connecticut">Connecticut</option>
+									<option value="Delaware">Delaware</option>
+									<option value="Florida">Florida</option>
+									<option value="Georgia">Georgia</option>
+									<option value="Hawaii">Hawaii</option>
+									<option value="Idaho">Idaho</option>
+									<option value="Illinois">Ilinois</option>
+									<option value="Indiana">Indiana</option>
+									<option value="Iowa">Iowa</option>
+									<option value="Kansas">Kansas</option>
+									<option value="Kentucky">Kentucky</option>
+									<option value="Louisiana">Louisiana</option>
+									<option value="Maine">Maine</option>
+									<option value="Maryland">Maryland</option>
+									<option value="Massachusetts">Massachusetts</option>
+									<option value="Michigan">Michigan</option>
+									<option value="Minnesota">Minnesota</option>
+									<option value="Mississippi">Mississippi</option>
+									<option value="Missouri">Missouri</option>
+									<option value="Montana">Montana</option>
+									<option value="Nebraska">Nebraska</option>
+									<option value="Nevada">Nevada</option>
+									<option value="New Hampshire">New Hampshire</option>
+									<option value="New Jersy">New Jersy</option>
+									<option value="New Mexico">New Mexico</option>
+									<option value="New York">New York</option>
+									<option value="North Carolina">North Carolina</option>
+									<option value="North Dakota">North Dakota</option>
+									<option value="Ohio">Ohio</option>
+									<option value="Oklahoma">Oklahoma</option>
+									<option value="Oregon">Oregon</option>
+									<option value="Pennsylvania">Pennsylvania</option>
+									<option value="Rhode Island">Rhode Island</option>
+									<option value="South Carolina">South Carolina</option>
+									<option value="South Dakota">South Dakota</option>
+									<option value="Tennesse">Tennesse</option>
+									<option value="Texas">Texas</option>
+									<option value="Utah">Utah</option>
+									<option value="Vermont">Vermont</option>
+									<option value="Virginia">Virginia</option>
+									<option value="Washington">Washington</option>
+									<option value="West Virginia">West Virginia</option>
+									<option value="Wisconsin">Wisconsin</option>
+									<option value="Wyoming">Wyoming</option>
+							</select></td>
+						</tr>
+					</table>
+					<br>
+					<p class="strow">All the fields are required!</p>
+				</form>
+			</div>
+		</div>
+		<!-- Form for create new meeting - END -->
+
+
+		<!-- Form for create new user - BEGIN  -->
+		<div id=" tabs-3" class="strow" title="Create New User" hidden="true">
+			<div id="userdialog-form" class="strow" title="Create New User">
+				<form>
+					<table class="table" style="width: 350px">
+
+						<tr class="strow">
+							<td><label for="first-name">First Name</label></td>
+							<td><input type="text" name="first name" id="first-name"
+								value="" /></td>
+						</tr>
+
+						<tr class="strow">
+							<td><label for="last-name">Last Name</label></td>
+							<td><input type="text" name="last name" id="last-name"
+								value="" required /></td>
+						</tr>
+
+						<tr class="strow">
+							<td><label for="username">User Name</label></td>
+							<td><input type="text" name="username" id="username"
+								value="" required /></td>
+						</tr>
+
+						<tr class="strow">
+							<td><label for="password">Password</label></td>
+							<td><input type="password" name="password" id="password"
+								value="" required /></td>
+						</tr>
+
+						<tr class="strow">
+							<td><label for="organization">Organization</label></td>
+							<td><input type="text" name="organization" id="organization"
+								value="" required /></td>
+						</tr>
+
+						<tr class="strow">
+							<td><label for="email">E-mail</label></td>
+							<td><input type="text" name="email" id="email" value=""
+								required /></td>
+						</tr>
+
+						<tr class="strow">
+							<td><label for="cell-phone">Phone</label></td>
+							<td><input type="tel" pattern="[0-9]+" name="cell-phone"
+								id="cell-phone" min="0" max="1500000000" value="" required /></td>
+						</tr>
+
+						<tr class="strow">
+							<td><label for="state">User-Type</label></td>
+							<td><select id="user-type">
+									<option value="N" selected="selected">Select</option>
+									<option value="A">Admin</option>
+									<option value="N">Client</option>
+							</select></td>
+						</tr>
+					</table>
+					<br>
+					<p class="strow">All the fields are required!</p>
+				</form>
+			</div>
+		</div>
+		<!-- Form for create new user - END -->
+
+
+
+		<footer class="footer">
+			<p class="headtext">
+				<i>Project By - Prashant Kagwad and Sourav Das</i>
+			</p>
+		</footer>
+	</div>
+</body>
+</html>

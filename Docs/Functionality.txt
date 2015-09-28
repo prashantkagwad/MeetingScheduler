@@ -1,0 +1,15 @@
+1. a. High Availability of Webapp >> Implemented [ Load Balancing of 2 Tomcat servers using Apache]
+
+    b. Redundancy(Replication) of Database >> No
+
+2. Caching between MiddleWare and Database >> Implemented [ Xmemcached]
+
+3. DB Sharding >> No
+
+4. TLS/SSL >> Implemented [Webpages, Middleware (Apache, Tomcat)]
+
+5. GZIP >> Implemented [Webpages <-> Middleware WS Calls]
+
+6. Authorization/Authentication >> Implemented [Role based Authorization, Authentication -Encrypted/Encoded(Username/Password) ]
+
+7. AJAX Calls >> Implemented [Webpages -> Middleware WS Calls]

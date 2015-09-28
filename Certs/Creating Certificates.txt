@@ -1,0 +1,103 @@
+creating certificates : 
+
+Step 1:
+
+C:\Users\prash>keytool -genkey -alias tomcat -keyalg RSA -keystore keystore.jks
+-keysize 2048
+Enter keystore password:
+What is your first and last name?
+  [Unknown]:  prash
+What is the name of your organizational unit?
+  [Unknown]:  cs
+What is the name of your organization?
+  [Unknown]:  utd
+What is the name of your City or Locality?
+  [Unknown]:  dallas
+What is the name of your State or Province?
+  [Unknown]:  tx
+What is the two-letter country code for this unit?
+  [Unknown]:  us
+Is CN=prash, OU=cs, O=utd, L=dallas, ST=tx, C=us correct?
+  [no]:  yes
+
+Enter key password for <tomcat>
+        (RETURN if same as keystore password):
+Re-enter new password:
+
+
+
+
+Step 2 :
+
+C:\Users\prash>keytool -list -v -keystore keystore.jks
+Enter keystore password:
+
+Keystore type: JKS
+Keystore provider: SUN
+
+Your keystore contains 1 entry
+
+Alias name: tomcat
+Creation date: Apr 20, 2014
+Entry type: PrivateKeyEntry
+Certificate chain length: 1
+Certificate[1]:
+Owner: CN=prash, OU=cs, O=utd, L=dallas, ST=tx, C=us
+Issuer: CN=prash, OU=cs, O=utd, L=dallas, ST=tx, C=us
+Serial number: 40b3e797
+Valid from: Sun Apr 20 23:10:04 CDT 2014 until: Sat Jul 19 23:10:04 CDT 2014
+Certificate fingerprints:
+         MD5:  35:8B:09:71:6F:6F:06:61:ED:01:3A:AA:57:D2:01:28
+         SHA1: F2:4C:CF:FF:B9:CC:F0:99:01:1B:0D:D3:0C:8B:F2:F5:98:E6:02:43
+         SHA256: BD:74:24:F3:2C:A0:D9:2C:23:AA:21:EE:C6:17:F5:6E:F1:38:9E:AE:C2:
+16:72:B7:F8:E3:8F:AA:FC:29:56:BE
+         Signature algorithm name: SHA256withRSA
+         Version: 3
+
+Extensions:
+
+#1: ObjectId: 2.5.29.14 Criticality=false
+SubjectKeyIdentifier [
+KeyIdentifier [
+0000: F4 10 CB DB 20 05 C1 8F   AD 40 4E 77 32 72 DC 23  .... ....@Nw2r.#
+0010: 01 39 30 CF                                        .90.
+]
+]
+
+
+
+*******************************************
+*******************************************
+
+
+
+Step 3 :
+C:\Users\prash>keytool -certreq -alias tomcat -keystore keystore.jks -file tomca
+t.csr
+Enter keystore password:
+
+C:\Users\prash>
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+step 4 : 
+C:\Users\prash>keytool -importkeystore -srckeystore keystore.jks -destkeystore n
+ew-store.p12 -deststoretype PKCS12
+Enter destination keystore password:
+Re-enter new password:
+Enter source keystore password:
+Entry for alias tomcat successfully imported.
+Import command completed:  1 entries successfully imported, 0 entries failed or
+cancelled
+
+C:\Users\prash>
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+keytool -certreq -alias tomcat -keystore keystore.jks -file tomcat.crt
+keytool -importkeystore -srckeystore keystore.jks -destkeystore new-store.p12 -deststoretype PKCS12
+//openssl pkcs12 -in KEYSTORE.pfx -out KEYSTORE.pem -nodes
+keytool -keystore my-ssl-keystore -alias tomcat -genkeypair -keyalg RSA
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////

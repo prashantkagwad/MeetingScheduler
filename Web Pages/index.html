@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+<title>Meeting Scheduler</title>
+<meta name="description" content="">
+<meta name="author" content="PK">
+<link rel="shortcut icon" href="images/ms.ico">
+<link rel="stylesheet" href="css/skeleton-v1.1.css">
+<link rel="stylesheet" href="css/main-r6.css">
+<link rel="stylesheet" href="css/media-queries-r6.css">
+<link rel="stylesheet" href="css/sprites-r6.css">
+<link rel="stylesheet" href="css/default-r6.css">
+<link rel="stylesheet" href="css/firststyle.css">
+<link rel="stylesheet" href="css/table.css" />
+<link rel="stylesheet"
+	href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
+<link rel="stylesheet"
+	href="http://code.jquery.com/ui/1.10.0/themes/base/jquery-ui.css" />
+
+<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+<script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+
+<script>
+	var host = "https://192.168.5.102:8443/MeetingSchedulerMW";
+
+	var XMLHttpFactories = [ function() {
+		return new XMLHttpRequest();
+	}, function() {
+		return new ActiveXObject("Msxml3.XMLHTTP");
+	}, function() {
+		return new ActiveXObject("Msxml2.XMLHTTP.6.0");
+	}, function() {
+		return new ActiveXObject("Msxml2.XMLHTTP.3.0");
+	}, function() {
+		return new ActiveXObject("Msxml2.XMLHTTP");
+	}, function() {
+		return new ActiveXObject("Microsoft.XMLHTTP");
+	} ];
+
+	function createXMLHTTPObject() {
+
+		var xmlhttp = false;
+
+		for (var i = 0; i < XMLHttpFactories.length; i++) {
+			try {
+				xmlhttp = XMLHttpFactories[i]();
+			} catch (e) {
+				continue;
+			}
+			break;
+		}
+		return xmlhttp;
+	}
+
+	function getUserDetails() {
+
+		var xmlhttp = createXMLHTTPObject();
+
+		if (!xmlhttp) {
+			alert("no xmlhttp");
+			return;
+		}
+
+		var username = document.getElementById("username").value;
+		var password = document.getElementById("password").value;
+
+		var jsonString = {
+			"userName" : username,
+			"password" : password
+		};
+		var request = JSON.stringify(jsonString);
+		var encodedString = btoa(request); // decoding the request
+		var response;
+
+		var url = host + "/getUserDetails";
+		xmlhttp.open("POST", url, true);
+		xmlhttp.setRequestHeader("Content-type", "application/json");
+		xmlhttp.setRequestHeader("Access-Control-Allow-Origin", "*");
+		xmlhttp.onreadystatechange = function() {
+
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+
+				response = JSON.parse(xmlhttp.responseText);
+
+				if (response.status == "Success") {
+
+					if (response.user.userType == "A") {
+
+						var text = JSON.stringify(response.user);
+						sessionStorage.setItem("user", text);
+						location.replace("admin.html");
+
+					} else if (response.user.userType == "N") {
+
+						var text = JSON.stringify(response.user);
+						sessionStorage.setItem("user", text);
+						location.replace("user.html");
+					}
+
+				} else {
+
+					alert("Username & Password didnot match! Please re-enter the correct information.");
+				}
+			}
+		};
+		xmlhttp.send(encodedString);
+		return false; // Do not follow hyperlink
+	}
+</script>
+</head>
+<body>
+
+	<div id="main">
+		<header>
+			<h1 class="heading">Meeting Scheduler</h1>
+		</header>
+
+		<article id="home">
+			<div class="container">
+				<div class="bottom-gradient between-rows">
+					<span class="left"></span> <span class="center"></span> <span
+						class="right"></span>
+				</div>
+				<br>
+				<p class="headtext ">Use Meeting Scheduler to arrange and
+					schedule meetings and other events. As a productivity tool it makes
+					the planning process easier and more effective. It uses the
+					simplest technologies possible, ensuring that all of our guests
+					will be able to use the system. Meeting Scheduler has been designed
+					to be effective in more than 90% of meeting planning situations,
+					and does not try to fulfill every possible need. However, it allows
+					for enough flexibility to make changes, make cancellations and
+					handles most other situations that might arise. Meeting Scheduler
+					is designed for the modern work place. It is friendly but
+					professional. How Meeting Scheduler Works :</p>
+				<p class="headtext">The system typically works in a 3-step
+					process. 1. You schedule a meeting with a specific agenda. 2.
+					Participants respond to invitations.</p>
+				<p class="headtext">Meeting Scheduler service allows you to
+					schedule as many meetings or events as you like.</p>
+
+				<form id="myForm" method="post" onsubmit="return getUserDetails()">
+					<table class="introtable">
+						<tr id="tableRow">
+							<td>User Name&nbsp;&nbsp;</td>
+							<td class="headtext"><input id="username" type="text"
+								class="headtext" name="username" required></td>
+						</tr>
+						<tr id="tableRow">
+							<td>Password&nbsp;&nbsp;</td>
+							<td><input id="password" type="password" class="headtext"
+								name="password" required></td>
+						</tr>
+						<tr id="tableRow">
+							<td></td>
+							<td class="contact"><button id="logout" class="lbutton"
+									type="submit" value="Submit">Submit</button></td>
+						</tr>
+					</table>
+				</form>
+			</div>
+		</article>
+
+		<article id="contact" class="dark">
+			<div class="container">
+				<h3 class="contact">Contact Us :</h3>
+				<p class="contact">
+					Prashant Kagwad&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a
+						href="mailto:prashantkagwad@utdallas.edu">prashantkagwad@utdallas.edu</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Phone
+					: +1 (469) 358 6897
+				</p>
+				<p class="contact">
+					Sourav Das&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a
+						href="mailto:souravdas@utdallas.edu">souravdas@utdallas.edu</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Phone
+					: +1 (940) 781 6393
+				</p>
+			</div>
+		</article>
+	</div>
+</body>
+</html>
